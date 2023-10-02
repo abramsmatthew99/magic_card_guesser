@@ -13,8 +13,6 @@ class MagicDBInterface(object):
             self.card_selected : bool = False
             self.selected_card : str = None
 
-            begin_game()
-            
         except:
             raise
         

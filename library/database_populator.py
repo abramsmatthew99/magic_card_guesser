@@ -1,5 +1,6 @@
 import sqlite3 as sqlite
-import json, settings
+import json
+from library import settings
 
 def create_connection(db_file):
     try:
