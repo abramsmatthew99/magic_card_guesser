@@ -1,5 +1,5 @@
 import sqlite3 as sqlite
-import json
+import json, settings
 
 def create_connection(db_file):
     try:
@@ -49,9 +49,8 @@ def parse_creatures(conn, contents):
 
 
 def main():
-    database = r"assets\Database\magic_cards.db"
 
-    conn = create_connection(database)
+    conn = create_connection(settings.DB)
     if conn is not None:
         with open("assets\JSON Files\oracle-cards-20231001210221.json", 'r', encoding='utf8') as f:
             contents = json.loads(f.read())
