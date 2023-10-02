@@ -1,4 +1,5 @@
 import sqlite3 as sqlite
+import json
 
 def create_connection(db_file):
     try:
@@ -8,36 +9,55 @@ def create_connection(db_file):
     except sqlite.Error as e:
         print(e)
     
-def execute_sql(conn: sqlite.Connection, sql_statement: str):
+def create_table_sql(conn: sqlite.Connection, sql_statement: str):
     try: 
         c = conn.cursor()
         c.execute(sql_statement)
     except sqlite.Error as e:
         print(e)
 
+def add_creature_sql(conn: sqlite.Connection, creature: tuple):
+    sql = """INSERT INTO creatures(name,type_line, mana_cost, cmc, colors, color_id, set_abbr, set_name, power,"""\
+    """toughness, rules_text, rarity, released, flavor_text)
+    VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)"""
+    try:
+        c = conn.cursor()
+        c.execute(sql, creature)
+        conn.commit()
+    except sqlite.IntegrityError:
+        return
+
+def create_creature_tuple_from_json_entry(conn, entry):
+    """Take the JSON data of a Magic creature card from Scryfall's format and populates the local database with this creature"""
+    try:
+
+        flavor_text = entry['flavor_text'] if 'flavor_text' in entry else ""
+        oracle_text = entry['oracle_text'] if 'oracle_text' in entry else ""
+        add_creature_sql(conn, (entry['name'], entry['type_line'], entry['mana_cost'], entry['cmc'], ",".join(entry['colors']), 
+            ",".join(entry['color_identity']), entry['set'], entry['set_name'], entry['power'], entry['toughness'],
+            oracle_text, entry['rarity'], entry['released_at'], flavor_text))
+    except KeyError as e:
+        print(e)
+        raise
+    
+def parse_creatures(conn, contents):
+    for card in contents:
+        if "power" in card:
+            create_creature_tuple_from_json_entry(conn, card)
+
+
+
+
 def main():
     database = r"assets\Database\magic_cards.db"
 
-    sql_create_creature_table = """CREATE TABLE IF NOT EXISTS creatures (
-        name text PRIMARY KEY, 
-        type_line text NOT NULL, 
-        mana_cost text NOT NULL, 
-        cmc int NOT_NULL, 
-        colors text, 
-        color_id text, 
-        set_abbr text, 
-        set_name text, 
-        power text NOT NULL, 
-        toughness text NOT NULL,
-        rules_text text, 
-        flavor_text text, 
-        rarity text,
-        released text
-    );"""
-
     conn = create_connection(database)
     if conn is not None:
-        execute_sql(conn, sql_create_creature_table)
+        with open("assets\JSON Files\oracle-cards-20231001210221.json", 'r', encoding='utf8') as f:
+            contents = json.loads(f.read())
+            parse_creatures(conn, contents)
 
 if __name__ == "__main__":
     main()
+    
+        
