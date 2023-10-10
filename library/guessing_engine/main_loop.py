@@ -1,33 +1,19 @@
-import sqlite3 as sqlite
-import settings
+from database_engine.database_interface import MagicDBInterface
 from enum import Enum
 
 
-class MagicDBInterface(object):
-    """A custom class for executing SQLite queries on a local database of Magic cards """
+#TODO: remember that apostrophes in column names and text fields should be escaped with a second apostrophe
+#TODO: remember that assembly-worker is assembly_worker
 
 
-    def __init__(self):
-        
-        try:
-            self.db = sqlite.connect(settings.DB)
 
-        except:
-            raise
-        
-    def select_random_creature_card(self):
-        conn = sqlite.connect(settings.DB)
-        select_statement = """SELECT name from creatures ORDER BY RANDOM() LIMIT 1;"""
-        with conn:
-            return conn.execute(select_statement).fetchone()[0]
-        
 class GuessingGame(object):
     """A class that initalizes and represents a game for guessing randomly queried Magic cards"""
 
     def __init__(self):
         self.interface : MagicDBInterface = MagicDBInterface()
         self.game_state = GameState.SELECTING_MODE.value
-        self.selected_card : str = None
+        self.selected_card : int = None #The ID of the selected card
         self.running : bool = False
         self.begin_game_loop()
 
@@ -50,8 +36,8 @@ class GuessingGame(object):
                 raise ValueError
     
     def present_card_pool_options(self):
-        menu_dict = {1: {"message": "Guess a random creature card", 
-                         "function":self.interface.select_random_creature_card}}
+        menu_dict = {1: {"message": "Guess a random card", 
+                         "function":self.interface.select_random_card}}
         for key in menu_dict: #Print each option
             print(f'{key}. {menu_dict[key]["message"]}')
         #Get User Input
